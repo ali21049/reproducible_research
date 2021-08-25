@@ -1,0 +1,51 @@
+library(tidyverse)
+#1. Code for reading in the dataset and/or processing the data
+df <- read.csv("activity.csv")
+
+#2. Histogram of the total number of steps taken each day
+df %>% group_by(date) %>% ggplot(aes(steps)) +
+  geom_histogram()
+ggsave("q_2.png")
+
+#3. Mean and median number of steps taken each day
+df %>% group_by(date) %>% summarise(mean = mean(steps),
+                                    median = median(steps))
+
+#4. Time series plot of the average number of steps taken
+df %>% group_by(interval) %>% 
+  summarise(mean = mean(steps, na.rm = TRUE),
+            median = median(steps), .groups = "drop") %>% 
+  ggplot(aes(interval, mean)) +
+  geom_line() 
+ggsave("q_4.png")
+
+#5. The 5-minute interval that, on average, contains 
+#the maximum number of steps
+df %>% group_by(interval) %>% 
+  summarise(mean = mean(steps, na.rm = T)) %>%
+  slice_max(order_by = mean)
+
+#6. Code to describe and show a strategy for imputing missing data
+df %>% fill(steps, .direction = "up") %>% fill(steps, .direction = "down")
+
+#7. Histogram of the total number of steps taken each
+#day after missing values are imputed
+
+df %>% fill(steps, .direction = "up") %>% fill(steps, .direction = "down") %>% 
+  group_by(date) %>% ggplot(aes(steps)) +
+  geom_histogram()
+
+ggsave("q_7.png")
+#8. Panel plot comparing the average number of steps taken 
+#per 5-minute interval across weekdays and weekends
+
+df %>% fill(steps, .direction = "up") %>% fill(steps, .direction = "down") %>%
+  mutate(date = ymd(date)) %>% 
+  mutate(day = wday(date, label = TRUE)) %>% 
+  mutate(weekday = 
+           ifelse(day == "Sun" | day == "Sat", "Weekend", "Weekday")) %>%
+  group_by(weekday, interval) %>% summarise(steps = mean(steps), .groups = "drop") %>% 
+  ggplot(aes(interval, steps)) +
+  geom_line() +
+  facet_wrap(~weekday)
+ggsave("q_8.png")
